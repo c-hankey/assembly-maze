@@ -64,12 +64,13 @@ PrintRow:
 ;original starting position
 call OGCharPosition
 
-mov userX, START_X
-mov userY, START_Y 
 
-call GetKeyPress  
+mov CX, 1 
 
 LoopStart:
+    call GetKeyPress
+    mov KEY_PRESS, AL
+
     cmp AL, 119
     je wChar
         
@@ -83,27 +84,40 @@ LoopStart:
     je dChar
        
         wChar: 
-        ;mov oldX, userX
+        mov oldY, userY
         call MoveUserUp
         jmp Done
             
         aChar: 
-        ;mov oldY, userY
+        mov oldX, userX
         call MoveUserLeft
         jmp Done
             
         sChar:
-        ;mov oldX, userX
+        mov oldY, userY
         call MoveUserDown
         jmp Done
            
         dChar:
-        ;mov oldY, userY
-        call MoveUserRight
-         
-     Done:                                                 
+        mov oldX, userX
+        call MoveUserRight 
+           
+        mov AX, userX                 
+        cmp AX, VCoordX
+        jne NoWinner
+        
+        mov AX, userY
+        cmp AX, VCoordY
+        je Winner
+        
+        NoWinner:
+       
+     Done:
+     inc CX
+     mov AL, KEY_PRESS
+     Loop LoopStart                                                 
                                                       
-                                                      
+     Winner:                                               
 ret
 
 
@@ -119,14 +133,17 @@ maze_setup DB 1,1,1,1,1,1,1,1,1,1
            DB 1,1,1,1,1,1,1,1,1,1 
 
 
+KEY_PRESS DB ?  ;variable to hold the key press value returned from GetKeyPress
 CURSOR_X DB 0   ;variable to hold x coord for printing the maze
 CURSOR_Y DB 0   ;variable to hold y coord for printing the maze
-userX DB ?      ;variable to hold x coord of user
-userY DB ?      ;variable to hold y coord of user
-oldX DB ?       ;variable to hold previous x coord of char in maze
-oldY DB ?       ;variable to hold previous y coord of char in maze
+userX = 6     ;variable to hold x coord of user
+userY = 4      ;variable to hold y coord of user
+oldX = 6     ;variable to hold previous x coord of char in maze
+oldY = 4     ;variable to hold previous y coord of char in maze
 START_X = 6     ;starting x coord for character
 START_Y = 4     ;starting y coord for character
+VCoordX = 2     ;variable to hold winning x coord
+VCoordY = 8     ;variable to hold winning y coord
 holdCount DW ?  ;hold count for rows
 ColTrack DW ?   ;hold count for columns 
 PosTrack DW ?   ;hold count for position in row
@@ -243,7 +260,9 @@ GetKeyPress ENDP;----------------------------------------
 
 MoveUserUp PROC
     ;mov oldX, userX
-    inc userX
+    mov DX, userY
+    dec DX
+    mov userY, DX
     GOTOXY userX, userY
     mov AH, 09h
     mov AL, PlayerChar
@@ -260,7 +279,10 @@ MoveUserUp ENDP
 
 MoveUserDown PROC
     ;mov oldX, userX
-    dec userX
+    
+    mov DX, userY
+    inc DX
+    mov userY, DX
     GOTOXY userX, userY
     mov AH, 09h
     mov AL, PlayerChar
@@ -277,7 +299,9 @@ MoveUserDown ENDP
     
 MoveUserLeft PROC
     ;mov oldY, userY
-    dec userY
+    mov DX, userX
+    dec DX
+    mov userX, DX
     GOTOXY userX, userY
     mov AH, 09h
     mov AL, PlayerChar
@@ -294,7 +318,9 @@ MoveUserLeft ENDP
                  
 MoveUserRight PROC;
     ;mov oldY, userY
-    inc userY
+    mov DX, userX
+    inc DX
+    mov userX, DX
     GOTOXY userX, userY
     mov AH, 09h
     mov AL, PlayerChar
@@ -310,7 +336,11 @@ MoveUserRight ENDP
                 
 Rewrite PROC
     GOTOXY oldX, oldY
-    putc PATH
+    mov AH, 09h
+    mov AL, PlayerChar
+    mov BX, WHITE
+    mov CX, 1
+    int q
     
     ret
 Rewrite ENDP
