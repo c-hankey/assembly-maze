@@ -64,7 +64,8 @@ PrintRow:
 ;original starting position
 call OGCharPosition
 
-
+mov userX, START_X
+mov userY, START_Y
 mov CX, 1 
 
 LoopStart:
@@ -84,30 +85,34 @@ LoopStart:
     je dChar
        
         wChar: 
-        mov oldY, userY
+        mov BL, userY
+        mov oldY, BL
         call MoveUserUp
         jmp Done
             
         aChar: 
-        mov oldX, userX
+        mov BL, userX
+        mov oldX, BL
         call MoveUserLeft
         jmp Done
             
         sChar:
-        mov oldY, userY
+        mov BL, userY
+        mov oldY, BL
         call MoveUserDown
         jmp Done
            
         dChar:
-        mov oldX, userX
+        mov BL, userX
+        mov oldX, BL
         call MoveUserRight 
            
-        mov AX, userX                 
-        cmp AX, VCoordX
+        mov AH, userX                 
+        cmp AH, VCoordX
         jne NoWinner
         
-        mov AX, userY
-        cmp AX, VCoordY
+        mov AH, userY
+        cmp AH, VCoordY
         je Winner
         
         NoWinner:
@@ -136,10 +141,10 @@ maze_setup DB 1,1,1,1,1,1,1,1,1,1
 KEY_PRESS DB ?  ;variable to hold the key press value returned from GetKeyPress
 CURSOR_X DB 0   ;variable to hold x coord for printing the maze
 CURSOR_Y DB 0   ;variable to hold y coord for printing the maze
-userX = 6     ;variable to hold x coord of user
-userY = 4      ;variable to hold y coord of user
-oldX = 6     ;variable to hold previous x coord of char in maze
-oldY = 4     ;variable to hold previous y coord of char in maze
+userX DB ?     ;variable to hold x coord of user
+userY DB ?      ;variable to hold y coord of user
+oldX DB ?     ;variable to hold previous x coord of char in maze
+oldY DB ?    ;variable to hold previous y coord of char in maze
 START_X = 6     ;starting x coord for character
 START_Y = 4     ;starting y coord for character
 VCoordX = 2     ;variable to hold winning x coord
@@ -257,12 +262,11 @@ GetKeyPress ENDP;----------------------------------------
     
 
 
-
+;--------------------------------------------------------
 MoveUserUp PROC
-    ;mov oldX, userX
-    mov DX, userY
-    dec DX
-    mov userY, DX
+    mov DL, userY
+    dec DL
+    mov userY, DL
     GOTOXY userX, userY
     mov AH, 09h
     mov AL, PlayerChar
@@ -278,11 +282,9 @@ MoveUserUp ENDP
 
 
 MoveUserDown PROC
-    ;mov oldX, userX
-    
-    mov DX, userY
-    inc DX
-    mov userY, DX
+    mov DL, userY
+    inc DL
+    mov userY, DL
     GOTOXY userX, userY
     mov AH, 09h
     mov AL, PlayerChar
@@ -298,10 +300,9 @@ MoveUserDown ENDP
 
     
 MoveUserLeft PROC
-    ;mov oldY, userY
-    mov DX, userX
-    dec DX
-    mov userX, DX
+    mov DL, userX
+    dec DL
+    mov userX, DL
     GOTOXY userX, userY
     mov AH, 09h
     mov AL, PlayerChar
@@ -316,11 +317,10 @@ MoveUserLeft ENDP
                  
                  
                  
-MoveUserRight PROC;
-    ;mov oldY, userY
-    mov DX, userX
-    inc DX
-    mov userX, DX
+MoveUserRight PROC
+    mov DL, userX
+    inc DL
+    mov userX, DL
     GOTOXY userX, userY
     mov AH, 09h
     mov AL, PlayerChar
@@ -337,10 +337,10 @@ MoveUserRight ENDP
 Rewrite PROC
     GOTOXY oldX, oldY
     mov AH, 09h
-    mov AL, PlayerChar
-    mov BX, WHITE
+    mov AL, PATH
+    mov BX, CYAN
     mov CX, 1
-    int q
+    int 10h
     
     ret
 Rewrite ENDP
