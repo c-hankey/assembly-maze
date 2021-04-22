@@ -2,15 +2,16 @@
 ;Programmer: Camden Hankey
 ;Professor: Dr. Packard
 ;Purpose: develop a maze which a user can navigate
-;Last Modified: April 20, 2021
+;Last Modified: April 22, 2021
 ;*************************************************
 
 include "emu8086.inc"
 
 org 100h
 
-;*************************************************************************
-;PRINTING THE MAZE--------------------------------------------------------
+;/////////////////////////////////////////////////////////////////////////
+;**************************PRINTING THE MAZE******************************
+;\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 CURSOROFF
 mov CX, NROW  ;move row count into CX
@@ -57,15 +58,17 @@ PrintRow:
 ;----------------------------------------------------------------------------                                                      
                                                       
 
-
-;****************************************************************************
-;CHARACTER MOVEMENT----------------------------------------------------------
+;////////////////////////////////////////////////////////////////////////////
+;****************************CHARACTER MOVEMENT******************************
+;\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 ;original starting position
 call OGCharPosition
 
-mov userX, START_X
-mov userY, START_Y
+mov userX, START_X      ;move starting X-coord into current user position variable X
+mov userY, START_Y      ;move starting Y-coord into current user position variable Y
+mov oldX, START_X       ;move starting X-coord into old user position variable X
+mov oldY, START_Y       ;move starting Y-coord into old user position variable Y
 mov CX, 1 
 
 LoopStart:
@@ -87,24 +90,32 @@ LoopStart:
         wChar: 
         mov BL, userY
         mov oldY, BL
+        mov BL, userX
+        mov oldX, BL
         call MoveUserUp
         jmp Done
             
         aChar: 
         mov BL, userX
         mov oldX, BL
+        mov BL, userY
+        mov oldY, BL
         call MoveUserLeft
         jmp Done
             
         sChar:
         mov BL, userY
         mov oldY, BL
+        mov BL, userX
+        mov oldX, BL
         call MoveUserDown
         jmp Done
            
         dChar:
         mov BL, userX
         mov oldX, BL
+        mov BL, userY
+        mov oldY, BL
         call MoveUserRight 
            
         mov AH, userX                 
@@ -125,9 +136,10 @@ LoopStart:
      Winner:                                               
 ret
 
+;////////////////////////////////////////////////////////////////////////////
+;****************************MEMORY/VARIABLES********************************
+;\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-;****************************************************************************
-;MEMORY/VARIABLES------------------------------------------------------------
 ;defined memory that stores the maze setup
 ;test case for now CMH
 maze_setup DB 1,1,1,1,1,1,1,1,1,1
@@ -141,10 +153,10 @@ maze_setup DB 1,1,1,1,1,1,1,1,1,1
 KEY_PRESS DB ?  ;variable to hold the key press value returned from GetKeyPress
 CURSOR_X DB 0   ;variable to hold x coord for printing the maze
 CURSOR_Y DB 0   ;variable to hold y coord for printing the maze
-userX DB ?     ;variable to hold x coord of user
+userX DB ?      ;variable to hold x coord of user
 userY DB ?      ;variable to hold y coord of user
-oldX DB ?     ;variable to hold previous x coord of char in maze
-oldY DB ?    ;variable to hold previous y coord of char in maze
+oldX DB ?       ;variable to hold previous x coord of char in maze
+oldY DB ?       ;variable to hold previous y coord of char in maze
 START_X = 6     ;starting x coord for character
 START_Y = 4     ;starting y coord for character
 VCoordX = 2     ;variable to hold winning x coord
@@ -167,9 +179,14 @@ DEFINE_PRINT_NUM_UNS
                     
 
 
-                    
-;***************************************************************************
-;PROCEDURES-----------------------------------------------------------------
+;///////////////////////////////////////////////////////////////////////////                    
+;*******************************PROCEDURES**********************************
+;\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+
+
+;@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+;PROCEDURES FOR PRINTING THE MAZE-------------------------
                     
 ;---------------------------------------------------------
 PrintCharPath PROC;_______________________________________
@@ -188,15 +205,15 @@ PrintCharPath PROC;_______________________________________
     int 10h
     
     ret
-PrintCharPath ENDP;--------------------------------------
-;________________________________________________________
+PrintCharPath ENDP;---------------------------------------
+;_________________________________________________________
 
 
 
 
 
-;--------------------------------------------------------
-PrintCharWall PROC;______________________________________
+;---------------------------------------------------------
+PrintCharWall PROC;_______________________________________
 ;
 ;Uses int 10h/09h to print a color character stored in WALL variable
 ;Receives: nothing
@@ -213,15 +230,19 @@ PrintCharWall PROC;______________________________________
 
     
     ret
-PrintCharWall ENDP;--------------------------------------
-;________________________________________________________
- 
- 
- 
- 
+PrintCharWall ENDP;---------------------------------------
+;_________________________________________________________ 
+;@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 
 
-;--------------------------------------------------------
-OGCharPosition PROC;_____________________________________ 
+
+
+
+
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+;PROCEDURES FOR CHARACTER MOVEMENT------------------------
+
+;---------------------------------------------------------
+OGCharPosition PROC;______________________________________ 
 ;
 ;Uses int 10h/09h to print the original character position in white
 ;Receives: START_X and START_Y and the values with them
@@ -235,16 +256,12 @@ OGCharPosition PROC;_____________________________________
     int 10h
     
     ret
-OGCharPosition ENDP;-------------------------------------
-;________________________________________________________
+OGCharPosition ENDP;--------------------------------------
+;_________________________________________________________
  
  
- 
- 
-    
-
-;--------------------------------------------------------
-GetKeyPress PROC;________________________________________
+;---------------------------------------------------------
+GetKeyPress PROC;_________________________________________
 ;
 ;Uses int 21h/07h to obtain a keypress from the user
 ;Receives: keypress from the user
@@ -257,31 +274,46 @@ GetKeyPress PROC;________________________________________
 GetKeyPress ENDP;----------------------------------------
 ;________________________________________________________
 
-    
-    
-    
+ 
+;--------------------------------------------------------
+MoveUserUp PROC;_________________________________________ 
+;
+;Uses int 10h/09h to move the user's char position up
+;Receives: uses both userX and userY values
+;Returns: prints player char one square up from previous
+;position and calls rewrite procedure
+;Requires: AL must be equal to 119 (user must press W) 
+    call Rewrite
+    mov DL, userY                                        
+    dec DL
+    mov userY, DL
+    ;call CheckForWall
+    cmp CH, 1
+    je NoGood
+    GOTOXY userX, userY
+    mov AH, 09h
+    mov AL, PlayerChar
+    mov BX, WHITE
+    mov CX, 1
+    int 10h 
+    ;call Rewrite
+     
+    NoGood:
+     
+    ret         
+MoveUserUp ENDP;-----------------------------------------
+;________________________________________________________
 
 
 ;--------------------------------------------------------
-MoveUserUp PROC
-    mov DL, userY
-    dec DL
-    mov userY, DL
-    GOTOXY userX, userY
-    mov AH, 09h
-    mov AL, PlayerChar
-    mov BX, WHITE
-    mov CX, 1
-    int 10h 
+MoveUserDown PROC;_______________________________________
+;
+;Uses int 10h/09h to move the user's char position down
+;Receives: uses both userX and userY values
+;Returns: prints player char one square down from previous
+;position and calls rewrite procedure
+;Requires: AL must be equal to 115 (user must press S)
     call Rewrite
-    
-    ret         
-MoveUserUp ENDP
-
-
-
-
-MoveUserDown PROC
     mov DL, userY
     inc DL
     mov userY, DL
@@ -291,15 +323,21 @@ MoveUserDown PROC
     mov BX, WHITE
     mov CX, 1
     int 10h 
-    call Rewrite
     
     ret
-MoveUserDown ENDP 
+MoveUserDown ENDP;---------------------------------------
+;________________________________________________________
 
 
-
-    
-MoveUserLeft PROC
+;--------------------------------------------------------    
+MoveUserLeft PROC;_______________________________________
+;
+;Uses int 10h/09h to move the user's char position left
+;Receives: uses both userX and userY values
+;Returns: prints player char one square to the left of
+;previous position and calls rewrite procedures
+;Requires: AL must be equal to 97 (user must press A)
+    call Rewrite
     mov DL, userX
     dec DL
     mov userX, DL
@@ -309,15 +347,21 @@ MoveUserLeft PROC
     mov BX, WHITE
     mov CX, 1
     int 10h 
-    call Rewrite
     
     ret
-MoveUserLeft ENDP
+MoveUserLeft ENDP;---------------------------------------
+;________________________________________________________
                  
-                 
-                 
-                 
-MoveUserRight PROC
+                                  
+;--------------------------------------------------------                 
+MoveUserRight PROC;______________________________________
+;
+;Uses int 10h/09h to move the user's char position right
+;Receives: uses both userX and userY values
+;Returns: prints player char one square to the right of
+;previous position and calls rewrite procedure
+;Requires: AL must be equal to 100 (user must press D)
+    call Rewrite
     mov DL, userX
     inc DL
     mov userX, DL
@@ -327,14 +371,21 @@ MoveUserRight PROC
     mov BX, WHITE
     mov CX, 1
     int 10h 
-    call Rewrite
+    ;call Rewrite
     
     ret
-MoveUserRight ENDP 
+MoveUserRight ENDP;---------------------------------------
+;_________________________________________________________
                 
                 
-                
-Rewrite PROC
+;---------------------------------------------------------                
+Rewrite PROC;_____________________________________________
+;
+;Uses int 10h/09h to print the path in the position the 
+;play was previously in
+;Recevies: uses both oldX and oldY values
+;Returns: prints path char in place of the old player char
+;Requires: a keypress of either W,A,S,D from the user
     GOTOXY oldX, oldY
     mov AH, 09h
     mov AL, PATH
@@ -343,5 +394,31 @@ Rewrite PROC
     int 10h
     
     ret
-Rewrite ENDP
+Rewrite ENDP;---------------------------------------------
+;_________________________________________________________
+
+
+
+;CheckForWall PROC
+;    mov DX, NCOL
+;    mov BL, userY
+;    sub BL, 1
+;    mul DX
+;    add BL, userX
+;    mov AL, maze_setup + BL
+;    cmp AL, 1
+;    jne Good
+;    
+;    putc 7
+;    mov CH, 1
+;    
+;    Good:
+;    mov CH, 0
+;    
+;    ret
+;CheckForWall ENDP
+    
+    
+    
+;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         
