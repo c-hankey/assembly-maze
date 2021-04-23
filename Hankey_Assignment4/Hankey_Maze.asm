@@ -283,22 +283,28 @@ MoveUserUp PROC;_________________________________________
 ;Returns: prints player char one square up from previous
 ;position and calls rewrite procedure
 ;Requires: AL must be equal to 119 (user must press W) 
-    call Rewrite
     mov DL, userY                                        
     dec DL
     mov userY, DL
-    ;call CheckForWall
+    call CheckForWall
     cmp CH, 1
-    je NoGood
+    je NoGoodU
+    
+    call Rewrite
     GOTOXY userX, userY
     mov AH, 09h
     mov AL, PlayerChar
     mov BX, WHITE
     mov CX, 1
     int 10h 
-    ;call Rewrite
+    jmp GoodU
      
-    NoGood:
+    NoGoodU:
+    mov DL, userY
+    inc DL
+    mov userY, DL
+    
+    GoodU:
      
     ret         
 MoveUserUp ENDP;-----------------------------------------
@@ -313,16 +319,28 @@ MoveUserDown PROC;_______________________________________
 ;Returns: prints player char one square down from previous
 ;position and calls rewrite procedure
 ;Requires: AL must be equal to 115 (user must press S)
-    call Rewrite
     mov DL, userY
     inc DL
     mov userY, DL
+    call CheckForWall
+    cmp CH, 1
+    je NoGoodD 
+    
+    call Rewrite
     GOTOXY userX, userY
     mov AH, 09h
     mov AL, PlayerChar
     mov BX, WHITE
     mov CX, 1
-    int 10h 
+    int 10h
+    jmp GoodD
+    
+    NoGoodD:
+    mov DL, userY
+    dec DL
+    mov userY, DL
+    
+    GoodD: 
     
     ret
 MoveUserDown ENDP;---------------------------------------
@@ -337,16 +355,28 @@ MoveUserLeft PROC;_______________________________________
 ;Returns: prints player char one square to the left of
 ;previous position and calls rewrite procedures
 ;Requires: AL must be equal to 97 (user must press A)
-    call Rewrite
     mov DL, userX
     dec DL
     mov userX, DL
+    call CheckForWall
+    cmp CH, 1
+    je NoGoodL
+     
+    call Rewrite
     GOTOXY userX, userY
     mov AH, 09h
     mov AL, PlayerChar
     mov BX, WHITE
     mov CX, 1
-    int 10h 
+    int 10h
+    jmp GoodL
+    
+    NoGoodL:
+    mov DL, userX
+    inc DL
+    mov userX, DL
+    
+    GoodL: 
     
     ret
 MoveUserLeft ENDP;---------------------------------------
@@ -361,17 +391,28 @@ MoveUserRight PROC;______________________________________
 ;Returns: prints player char one square to the right of
 ;previous position and calls rewrite procedure
 ;Requires: AL must be equal to 100 (user must press D)
-    call Rewrite
     mov DL, userX
     inc DL
     mov userX, DL
+    call CheckForWall
+    cmp CH, 1
+    je NoGoodR
+    
+    call Rewrite
     GOTOXY userX, userY
     mov AH, 09h
     mov AL, PlayerChar
     mov BX, WHITE
     mov CX, 1
-    int 10h 
-    ;call Rewrite
+    int 10h
+    jmp GoodR 
+    
+    NoGoodR:
+    mov DL, userX
+    dec DL
+    mov userX, DL
+    
+    GoodR:
     
     ret
 MoveUserRight ENDP;---------------------------------------
@@ -398,27 +439,44 @@ Rewrite ENDP;---------------------------------------------
 ;_________________________________________________________
 
 
-
-;CheckForWall PROC
-;    mov DX, NCOL
-;    mov BL, userY
-;    sub BL, 1
-;    mul DX
-;    add BL, userX
-;    mov AL, maze_setup + BL
-;    cmp AL, 1
-;    jne Good
-;    
-;    putc 7
-;    mov CH, 1
-;    
-;    Good:
-;    mov CH, 0
-;    
-;    ret
-;CheckForWall ENDP
+;---------------------------------------------------------
+CheckForWall PROC;________________________________________
+;
+;Checks to see if user is going into a wall by comparing 
+;the users new position with that position within the two 
+;dimensional array
+;Receives: NCOL, userY, userX, maze_setup
+;Returns: 1 in CH if it is a wall, 0 in CH if not
+;Requires: a keypress from the user
+    mov BX, 0
+    mov DX, NCOL
+    mov BL, userY
+    cmp BL, 0
+    jz TopRow 
     
+    One:
+    mov AX, BX
+    mul DX
+    mov BX, AX 
     
+    TopRow:
+    add BL, userX
+    mov AL, maze_setup + BX
+    cmp AL, 1
+    jne Good
+    
+    putc 7
+    mov CH, 1
+    jmp ThatsAWall
+    
+    Good:
+    mov CH, 0 
+    
+    ThatsAWall:
+    
+    ret
+CheckForWall ENDP;----------------------------------------
+;_________________________________________________________
     
 ;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         
