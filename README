@@ -1,7 +1,6 @@
 This was a maze game I created in a computer science class. I used emu8086 to write and compile it. You may have to download a version of the emulator for it to properly run. 
 
-This was a fun project that taught me a lot about the fine details of computing at a low level. The maze itself takes a couple minutes to print out because it is stored in
-2D array and is looped through.
+This was a fun project that taught me a lot about the fine details of computing at a low level. The maze itself takes a couple minutes to print out because it is stored in 2D array and is looped through.
 
 User movement is handled with the arrow keys. 
 If a user runs into a wall, the program makes a noise to let them know.
